@@ -94,9 +94,13 @@
             max-width: 350px;
             text-align: center;
             position: relative;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* เด้งแบบนุ่มนวล */
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
             border: 2px solid #d4af37;
+            
+            /* --- 2 บรรทัดนี้คือส่วนที่เพิ่มเข้ามาเพื่อแก้ปัญหาเลื่อนไม่ได้ --- */
+            max-height: 80vh; /* กำหนดให้กล่องสูงไม่เกิน 80% ของหน้าจอ */
+            overflow-y: auto; /* ถ้าเนื้อหายาวกว่ากล่อง ให้สร้างแถบเลื่อนขึ้นลงอัตโนมัติ */
         }
 
         @keyframes popIn {
