@@ -3,258 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเปิดไพ่ทำนาย (แบบ Popup)</title>
+    <title>ระบบเปิดไพ่ทำนาย</title>
+    
+    <!-- นำเข้าฟอนต์ Prompt จาก Google Fonts ให้สวยงามขึ้น -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        /* จัดรูปแบบพื้นหลังและกล่องใส่ตัวเลข */
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f9; }
-        .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; }
-        input { padding: 10px; font-size: 16px; width: 200px; text-align: center; border: 1px solid #ccc; border-radius: 5px; }
+        /* 1. พื้นหลังของเว็บ (ไล่สีโทนดูลึกลับ) */
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            text-align: center; 
+            padding: 50px 20px; 
+            background: linear-gradient(135deg, #1a0b2e, #4b1d52, #100b1f); /* ไล่สี ม่วง-ดำ */
+            color: #ffffff; /* เปลี่ยนสีตัวอักษรหลักเป็นสีขาว */
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        /* 2. กล่องตรงกลาง (สไตล์กระจกใสโปร่งแสง) */
+        .box { 
+            background: rgba(255, 255, 255, 0.1); /* สีขาวโปร่งแสง */
+            backdrop-filter: blur(10px); /* เอฟเฟกต์เบลอพื้นหลัง */
+            padding: 40px 30px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            display: inline-block; 
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h2 { margin-top: 0; color: #ffd700; /* หัวข้อสีทอง */ }
+
+        /* 3. ช่องกรอกตัวเลข */
+        input { 
+            padding: 12px; 
+            font-size: 18px; 
+            width: 80%; 
+            max-width: 200px;
+            text-align: center; 
+            border: 2px solid #ffd700; 
+            border-radius: 10px; 
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-family: 'Prompt', sans-serif;
+            font-weight: bold;
+        }
+        input:focus { outline: none; box-shadow: 0 0 10px #ffd700; }
+
+        /* 4. ปุ่มกดสีทอง */
+        button { 
+            margin-top: 20px; 
+            padding: 12px 25px; 
+            font-size: 16px; 
+            font-family: 'Prompt', sans-serif;
+            font-weight: 600;
+            background: linear-gradient(45deg, #d4af37, #ffdf00); /* ไล่สีทอง */
+            color: #1a0b2e; /* ตัวหนังสือสีม่วงเข้ม */
+            border: none; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            width: 80%;
+            max-width: 220px;
+            transition: all 0.3s ease; /* ให้มีเอฟเฟกต์ตอนชี้เมาส์ */
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+        button:hover { 
+            transform: translateY(-2px); /* ปุ่มลอยขึ้นนิดนึงตอนชี้ */
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+        }
 
         /* =========================================
-           ส่วนของหน้าต่าง Popup ที่จะเด้งขึ้นมาซ้อนทับ
+           ส่วนของหน้าต่าง Popup
            ========================================= */
         .modal {
             display: none; 
             position: fixed; 
-            z-index: 1; 
+            z-index: 10; 
             left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.8); 
+            background-color: rgba(0,0,0,0.85); 
         }
 
-        /* กล่องเนื้อหาไพ่ที่อยู่ตรงกลาง Popup */
         .modal-content {
-            background-color: white;
+            background: linear-gradient(135deg, #ffffff, #fdfbf7);
+            color: #333;
             margin: 10% auto; 
-            padding: 20px;
-            border-radius: 12px;
-            width: 80%;
+            padding: 30px 20px;
+            border-radius: 15px;
+            width: 85%;
             max-width: 350px;
             text-align: center;
             position: relative;
-            animation: popIn 0.4s ease-out; 
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* เด้งแบบนุ่มนวล */
+            box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
+            border: 2px solid #d4af37;
         }
 
-        /* สร้างเอฟเฟกต์ให้กล่องค่อยๆ ซูมเด้งขึ้นมา */
         @keyframes popIn {
             from { transform: scale(0.5); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
 
-        /* ปุ่ม (X) สำหรับกดปิด Popup */
         .close-btn {
             position: absolute;
             top: 10px;
-            right: 15px;
-            color: #888;
-            font-size: 28px;
+            right: 20px;
+            color: #aaa;
+            font-size: 30px;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
         }
-        .close-btn:hover { color: #000; }
+        .close-btn:hover { color: #d4af37; }
 
-        /* ปรับขนาดรูปไพ่ใน Popup */
-        .modal-content img { max-width: 100%; border-radius: 8px; margin-top: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .modal-content img { 
+            max-width: 100%; 
+            border-radius: 10px; 
+            margin-top: 15px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2); 
+        }
         
-        /* ปรับสีให้คำทำนายเด่นขึ้น */
-        #modalText { color: #c88100; font-weight: bold; font-size: 16px; margin: 10px 0;}
-        #modalDescription { color: #444; font-size: 14px; line-height: 1.5;}
+        #modalTitle { color: #1a0b2e; font-size: 22px; margin-bottom: 5px; margin-top: 10px; }
+        #modalText { color: #d4af37; font-weight: bold; font-size: 16px; margin: 10px 0;}
+        #modalDescription { color: #555; font-size: 15px; line-height: 1.6; margin-top: 15px;}
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h2>กรอกหมายเลขทำนาย</h2>
-    <p style="color: #666; font-size: 14px;">พิมพ์ตัวเลข (1 - 28) แล้วกด <b>Enter</b> เพื่อเปิดไพ่</p>
+    <h2>✨ รับคำทำนาย ✨</h2>
+    <p style="color: #ddd; font-size: 14px; margin-bottom: 20px;">ตั้งสมาธิ พิมพ์ตัวเลข (1 - 28)<br>แล้วกดปุ่มเพื่อเปิดไพ่</p>
     
-    <!-- ช่องกรอกตัวเลข -->
-    <input type="number" id="luckyNumber" placeholder="ตัวเลข 1 - 28" onkeypress="checkEnter(event)">
+    <input type="number" id="luckyNumber" placeholder="1 - 28" onkeypress="checkEnter(event)">
+    <br>
+    <button onclick="showPopup()">เปิดไพ่ทำนาย</button>
 </div>
 
-<!-- =========================================
-     โครงสร้างหน้าต่าง Popup
-     ========================================= -->
+<!-- หน้าต่าง Popup -->
 <div id="cardModal" class="modal">
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
-        
         <h3 id="modalTitle"></h3>
-        <p id="modalText"></p> <!-- ข้อความสั้น -->
+        <p id="modalText"></p>
         <div id="modalImage"></div>
-        <p id="modalDescription"></p> <!-- คำอธิบายยาว -->
+        <p id="modalDescription"></p>
     </div>
 </div>
 
 <script>
-    // ลบ const cardDatabase = { ที่ซ้ำกันออก 1 บรรทัด
+    // ข้อมูลไพ่ทั้ง 28 ใบเหมือนเดิมครับ
     const cardDatabase = {
-        "1": { 
-            name: "ไพ่รุ่งอรุณ", 
-            text: "เมื่อแสงแรกมาเยือน ความสำเร็จย่อมมาเยือนเช่นกัน", 
-            description: "สิ่งใหม่ที่กำลังเริ่มต้นจะเต็มไปด้วยโอกาส ขอให้ทุกก้าวของคุณพบแต่ความสุข ความสมหวัง และความสำเร็จที่งดงาม",
-            img: "https://i.postimg.cc/pT93SRrh/Taro-Photo-1.png" 
-        },
-        "2": { 
-            name: "ไพ่โชคลาภทองคำ", 
-            text: "บุญเก่าหนุน บุญใหม่เสริม โชคดีเพิ่มทุกวันคืน", 
-            description: "มีเกณฑ์ได้รับข่าวดี โอกาสดี หรือสิ่งที่รอคอย ขอให้ความมั่งคั่งและโชคลาภไหลมาหาคุณอย่างต่อเนื่อง",
-            img: "https://i.postimg.cc/65xFHsX2/Taro-Photo-2.png" 
-        },
-        "3": { 
-            name: "ไพ่ดอกบัวเบ่งบาน", 
-            text: "ใจที่งาม ย่อมผลิบานดุจดอกบัวรับแสงตะวัน", 
-            description: "ความดีที่คุณสั่งสมกำลังออกดอกออกผล ขอให้ชีวิตเต็มไปด้วยความสงบ ความเจริญ และผู้คนที่จริงใจ",
-            img: "https://i.postimg.cc/QxZv6L3T/Taro-Photo-3.png" 
-        },
-        "4": { 
-            name: "ไพ่สายลมแห่งโอกาส", 
-            text: "ลมแห่งโชคพัดผ่าน ผู้พร้อมย่อมคว้าไว้ได้", 
-            description: "โอกาสสำคัญกำลังเข้ามา ขอให้คุณกล้าก้าวเดิน และประสบความสำเร็จเกินกว่าที่ตั้งใจไว้",
-            img: "https://i.postimg.cc/m2WKdxsM/Taro-Photo-4.png" 
-        },
-        "5": { 
-            name: "ไพ่พระจันทร์อิ่มบุญ", 
-            text: "แสงจันทร์อ่อนโยน หล่อเลี้ยงหัวใจให้เปี่ยมสุข", 
-            description: "ชีวิตจะเต็มไปด้วยความอบอุ่นและความรัก ขอให้ทุกคืนเป็นคืนแห่งความสบายใจและทุกวันเป็นวันที่สดใส",
-            img: "https://i.postimg.cc/QxZv6L3W/Taro-Photo-5.png" 
-        },
-        "6": { 
-            name: "ไพ่มังกรมงคล", 
-            text: "พลังแห่งใจ นำชัยมาเหนือทุกเส้นทาง", 
-            description: "ความสามารถของคุณจะได้รับการยอมรับ ขอให้มีพลัง ความกล้า และความสำเร็จในทุกสิ่งที่ลงมือทำ",
-            img: "https://i.postimg.cc/rpsHdMSR/Taro-Photo-6.png" 
-        },
-        "7": { 
-            name: "ไพ่สะพานแห่งความสำเร็จ", 
-            text: "ทุกก้าวที่เดิน ล้วนเชื่อมสู่ปลายทางแห่งชัยชนะ", 
-            description: "สิ่งที่ตั้งใจจะค่อย ๆ สำเร็จตามลำดับ ขอให้การเดินทางของชีวิตเต็มไปด้วยผู้สนับสนุนที่ดี",
-            img: "https://i.postimg.cc/3wNqyYgm/Taro-Photo-7.png" 
-        },
-        "8": { 
-            name: "ไพ่เมล็ดพันธุ์ทอง", 
-            text: "หว่านสิ่งดี วันนี้ ผลิดอกงามวันหน้า", 
-            description: "ทุกความพยายามกำลังเติบโต ขอให้ผลลัพธ์งอกงามเกินความคาดหวัง",
-            img: "https://i.postimg.cc/cJCzK0QR/Taro-Photo-8.png" 
-        },
-        "9": { 
-            name: "ไพ่สายรุ้งแห่งความหวัง", 
-            text: "หลังทุกเมฆฝน ย่อมมีสายรุ้งงดงามเสมอ", 
-            description: "ความสุขกำลังเดินทางมาหาคุณ ขอให้พบแต่เรื่องราวที่น่ายินดีและรอยยิ้มในทุกวัน",
-            img: "https://i.postimg.cc/5tyrHbwq/Taro-Photo-9.png" 
-        },
-        "10": { 
-            name: "ไพ่ประตูแห่งพร", 
-            text: "เมื่อใจเปิดรับ พรทั้งหลายย่อมหลั่งไหล", 
-            description: "โอกาสใหม่กำลังเปิดออก ขอให้คุณได้รับสิ่งดี ๆ ทั้งการงาน การเงิน และความสัมพันธ์",
-            img: "https://i.postimg.cc/C5Tr689m/Taro-Photo-10.png" 
-        },
-        "11": { 
-            name: "ไพ่ดาวนำโชค", 
-            text: "ดาวทุกดวงส่องทาง ผู้มุ่งมั่นย่อมไม่หลงทาง", 
-            description: "คุณกำลังเดินถูกเส้นทาง ขอให้พบความสำเร็จอย่างมั่นคงและยั่งยืน",
-            img: "https://i.postimg.cc/Rh5pbtjB/Taro-Photo-11.png" 
-        },
-        "12": { 
-            name: "ไพ่หัวใจอิ่มสุข", 
-            text: "รักที่จริงใจ ย่อมเติมเต็มชีวิตให้เบ่งบาน", 
-            description: "ความรักและมิตรภาพจะนำพาความสุขมาให้ ขอให้หัวใจเต็มไปด้วยความอบอุ่นเสมอ",
-            img: "https://i.postimg.cc/BbT7W6Gy/Taro-Photo-12.png" 
-        },
-        "13": { 
-            name: "ไพ่แสงแห่งปัญญา", 
-            text: "ปัญญานำทาง ทุกปัญหากลายเป็นโอกาส", 
-            description: "ความคิดและการตัดสินใจของคุณจะนำไปสู่ความสำเร็จ ขอให้พบแต่ทางออกที่ดีที่สุด",
-            img: "https://i.postimg.cc/qqsDfRd9/Taro-Photo-13.png" 
-        },
-        "14": { 
-            name: "ไพ่ต้นไม้แห่งความมั่งคั่ง", 
-            text: "รากมั่นคง กิ่งก้านย่อมเติบโตไกล", 
-            description: "การเงินและความมั่นคงจะค่อย ๆ เพิ่มพูน ขอให้มีความอุดมสมบูรณ์ตลอดไป",
-            img: "https://i.postimg.cc/WbVfGMGr/Taro-Photo-14.png" 
-        },
-        "15": { 
-            name: "ไพ่คลื่นแห่งโชคดี", 
-            text: "คลื่นทุกระลอก พาโชคดีมาสู่ฝั่ง", 
-            description: "ข่าวดีและโอกาสดีจะเข้ามาอย่างต่อเนื่อง ขอให้ชีวิตเต็มไปด้วยความราบรื่น",
-            img: "https://i.postimg.cc/wTk4072y/Taro-Photo-15.png" 
-        },
-        "16": { 
-            name: "ไพ่ดวงตะวันทอง", 
-            text: "แสงทองแห่งวันใหม่ นำชัยมาสู่ผู้กล้า", 
-            description: "ความสำเร็จกำลังฉายแสงเหนือเส้นทางของคุณ ขอให้ทุกเป้าหมายสัมฤทธิ์ผล",
-            img: "https://i.postimg.cc/VLFZDdg9/Taro-Photo-16.png" 
-        },
-        "17": { 
-            name: "ไพ่ปีกแห่งอิสรภาพ", 
-            text: "เมื่อใจกล้า ปีกแห่งฝันย่อมพาบินไกล", 
-            description: "คุณจะได้ทำในสิ่งที่รักและประสบความสำเร็จ ขอให้มีอิสระและความสุขในทุกวัน",
-            img: "https://i.postimg.cc/VLFZDdgB/Taro-Photo-17.png" 
-        },
-        "18": { 
-            name: "ไพ่มหาสมุทรแห่งพร", 
-            text: "พรอันยิ่งใหญ่ ไหลดั่งสายน้ำไม่สิ้นสุด", 
-            description: "ความอุดมสมบูรณ์กำลังเข้ามา ขอให้ได้รับทั้งสุขภาพที่แข็งแรงและความมั่งคั่ง",
-            img: "https://i.postimg.cc/6pjjxgDM/Taro-Photo-18.png" 
-        },
-        "19": { 
-            name: "ไพ่หงส์ขาว", 
-            text: "สง่างามด้วยคุณธรรม ย่อมได้รับความเคารพ", 
-            description: "ผู้คนจะชื่นชมในความสามารถและความดีของคุณ ขอให้เกียรติยศและความสุขอยู่เคียงข้าง",
-            img: "https://i.postimg.cc/7L5BHXkS/Taro-Photo-19.png" 
-        },
-        "20": { 
-            name: "ไพ่กุญแจทอง", 
-            text: "กุญแจแห่งโชค เปิดทุกประตูแห่งความสำเร็จ", 
-            description: "สิ่งที่รอคอยกำลังเปิดทางให้คุณ ขอให้ทุกโอกาสนำพาความสุขและความเจริญ",
-            img: "https://i.postimg.cc/DzSCv5TR/Taro-Photo-20.png" 
-        },
-        "21": { 
-            name: "ไพ่สายธารแห่งบุญ", 
-            text: "บุญที่สร้างไว้ จะหล่อเลี้ยงชีวิตให้ร่มเย็น", 
-            description: "สิ่งดีที่คุณทำจะย้อนกลับมาเป็นพรอันยิ่งใหญ่ ขอให้พบแต่คนดีและเรื่องดี",
-            img: "https://i.postimg.cc/6Q8HWzKN/Taro-Photo-21.png" 
-        },
-        "22": { 
-            name: "ไพ่ฟ้าหลังฝน", 
-            text: "ฟ้าแจ่มใส ย่อมนำความสดใสมาสู่หัวใจ", 
-            description: "วันข้างหน้าจะเต็มไปด้วยรอยยิ้มและความสมหวัง ขอให้ทุกสิ่งเป็นไปอย่างราบรื่น",
-            img: "https://i.postimg.cc/j24cgFHb/Taro-Photo-22.png" 
-        },
-        "23": { 
-            name: "ไพ่มงกุฎชัย", 
-            text: "ผู้เพียรพยายาม ย่อมคู่ควรกับมงกุฎแห่งชัยชนะ", 
-            description: "ความสำเร็จที่คุณปรารถนากำลังใกล้เข้ามา ขอให้ได้รับการยอมรับและความภาคภูมิใจ",
-            img: "https://i.postimg.cc/tJNkSM3y/Taro-Photo-23.png" 
-        },
-        "24": { 
-            name: "ไพ่เรือแห่งโชค", 
-            text: "เรือแห่งฝัน แล่นถึงฝั่งแห่งความสมหวัง", 
-            description: "การเดินทางทุกด้านจะราบรื่น ขอให้โชคดีติดตามคุณไปทุกแห่ง",
-            img: "https://i.postimg.cc/4yQPLS6Y/Taro-Photo-24.png" 
-        },
-        "25": { 
-            name: "ไพ่แสงดาวพราวฟ้า", 
-            text: "ดาวนับพันดวง รวมเป็นพรหนึ่งเดียวเพื่อเธอ", 
-            description: "คุณกำลังได้รับพลังแห่งความหวัง ขอให้ทุกความฝันกลายเป็นความจริง",
-            img: "https://i.postimg.cc/C5s7PQG8/Taro-Photo-25.png" 
-        },
-        "26": { 
-            name: "ไพ่ดอกไม้สี่ฤดู", 
-            text: "ความสุขผลิบาน ได้ทุกฤดูกาลของชีวิต", 
-            description: "ชีวิตจะเต็มไปด้วยความสมดุล ความสุข และความอุดมสมบูรณ์ในทุกช่วงเวลา",
-            img: "https://i.postimg.cc/VkVRVMCb/Taro-Photo-26.png" 
-        },
-        "27": { 
-            name: "ไพ่มือแห่งเมตตา", 
-            text: "ให้ด้วยใจ ย่อมได้รับพรกลับคืนเสมอ", 
-            description: "ความเมตตาของคุณจะดึงดูดสิ่งดี ๆ เข้ามา ขอให้มีผู้คนคอยสนับสนุนและช่วยเหลือ",
-            img: "https://i.postimg.cc/pL6Z68FF/Taro-Photo-27.png" 
-        },
-        "28": { 
-            name: "ไพ่พระพิรุณแห่งพร", 
-            text: "สายฝนโปรยพรม หล่อเลี้ยงความฝันให้เติบโต", 
-            description: "ความก้าวหน้าและความสำเร็จจะค่อย ๆ งอกงาม ขอให้ชีวิตเปี่ยมด้วยความสดชื่นและโชคดี",
-            img: "https://i.postimg.cc/L8bTbf1j/Taro-Photo-28.png" 
-        }
+        "1": { name: "ไพ่รุ่งอรุณ", text: "เมื่อแสงแรกมาเยือน ความสำเร็จย่อมมาเยือนเช่นกัน", description: "สิ่งใหม่ที่กำลังเริ่มต้นจะเต็มไปด้วยโอกาส ขอให้ทุกก้าวของคุณพบแต่ความสุข ความสมหวัง และความสำเร็จที่งดงาม", img: "https://i.postimg.cc/pT93SRrh/Taro-Photo-1.png" },
+        "2": { name: "ไพ่โชคลาภทองคำ", text: "บุญเก่าหนุน บุญใหม่เสริม โชคดีเพิ่มทุกวันคืน", description: "มีเกณฑ์ได้รับข่าวดี โอกาสดี หรือสิ่งที่รอคอย ขอให้ความมั่งคั่งและโชคลาภไหลมาหาคุณอย่างต่อเนื่อง", img: "https://i.postimg.cc/65xFHsX2/Taro-Photo-2.png" },
+        "3": { name: "ไพ่ดอกบัวเบ่งบาน", text: "ใจที่งาม ย่อมผลิบานดุจดอกบัวรับแสงตะวัน", description: "ความดีที่คุณสั่งสมกำลังออกดอกออกผล ขอให้ชีวิตเต็มไปด้วยความสงบ ความเจริญ และผู้คนที่จริงใจ", img: "https://i.postimg.cc/QxZv6L3T/Taro-Photo-3.png" },
+        "4": { name: "ไพ่สายลมแห่งโอกาส", text: "ลมแห่งโชคพัดผ่าน ผู้พร้อมย่อมคว้าไว้ได้", description: "โอกาสสำคัญกำลังเข้ามา ขอให้คุณกล้าก้าวเดิน และประสบความสำเร็จเกินกว่าที่ตั้งใจไว้", img: "https://i.postimg.cc/m2WKdxsM/Taro-Photo-4.png" },
+        "5": { name: "ไพ่พระจันทร์อิ่มบุญ", text: "แสงจันทร์อ่อนโยน หล่อเลี้ยงหัวใจให้เปี่ยมสุข", description: "ชีวิตจะเต็มไปด้วยความอบอุ่นและความรัก ขอให้ทุกคืนเป็นคืนแห่งความสบายใจและทุกวันเป็นวันที่สดใส", img: "https://i.postimg.cc/QxZv6L3W/Taro-Photo-5.png" },
+        "6": { name: "ไพ่มังกรมงคล", text: "พลังแห่งใจ นำชัยมาเหนือทุกเส้นทาง", description: "ความสามารถของคุณจะได้รับการยอมรับ ขอให้มีพลัง ความกล้า และความสำเร็จในทุกสิ่งที่ลงมือทำ", img: "https://i.postimg.cc/rpsHdMSR/Taro-Photo-6.png" },
+        "7": { name: "ไพ่สะพานแห่งความสำเร็จ", text: "ทุกก้าวที่เดิน ล้วนเชื่อมสู่ปลายทางแห่งชัยชนะ", description: "สิ่งที่ตั้งใจจะค่อย ๆ สำเร็จตามลำดับ ขอให้การเดินทางของชีวิตเต็มไปด้วยผู้สนับสนุนที่ดี", img: "https://i.postimg.cc/3wNqyYgm/Taro-Photo-7.png" },
+        "8": { name: "ไพ่เมล็ดพันธุ์ทอง", text: "หว่านสิ่งดี วันนี้ ผลิดอกงามวันหน้า", description: "ทุกความพยายามกำลังเติบโต ขอให้ผลลัพธ์งอกงามเกินความคาดหวัง", img: "https://i.postimg.cc/cJCzK0QR/Taro-Photo-8.png" },
+        "9": { name: "ไพ่สายรุ้งแห่งความหวัง", text: "หลังทุกเมฆฝน ย่อมมีสายรุ้งงดงามเสมอ", description: "ความสุขกำลังเดินทางมาหาคุณ ขอให้พบแต่เรื่องราวที่น่ายินดีและรอยยิ้มในทุกวัน", img: "https://i.postimg.cc/5tyrHbwq/Taro-Photo-9.png" },
+        "10": { name: "ไพ่ประตูแห่งพร", text: "เมื่อใจเปิดรับ พรทั้งหลายย่อมหลั่งไหล", description: "โอกาสใหม่กำลังเปิดออก ขอให้คุณได้รับสิ่งดี ๆ ทั้งการงาน การเงิน และความสัมพันธ์", img: "https://i.postimg.cc/C5Tr689m/Taro-Photo-10.png" },
+        "11": { name: "ไพ่ดาวนำโชค", text: "ดาวทุกดวงส่องทาง ผู้มุ่งมั่นย่อมไม่หลงทาง", description: "คุณกำลังเดินถูกเส้นทาง ขอให้พบความสำเร็จอย่างมั่นคงและยั่งยืน", img: "https://i.postimg.cc/Rh5pbtjB/Taro-Photo-11.png" },
+        "12": { name: "ไพ่หัวใจอิ่มสุข", text: "รักที่จริงใจ ย่อมเติมเต็มชีวิตให้เบ่งบาน", description: "ความรักและมิตรภาพจะนำพาความสุขมาให้ ขอให้หัวใจเต็มไปด้วยความอบอุ่นเสมอ", img: "https://i.postimg.cc/BbT7W6Gy/Taro-Photo-12.png" },
+        "13": { name: "ไพ่แสงแห่งปัญญา", text: "ปัญญานำทาง ทุกปัญหากลายเป็นโอกาส", description: "ความคิดและการตัดสินใจของคุณจะนำไปสู่ความสำเร็จ ขอให้พบแต่ทางออกที่ดีที่สุด", img: "https://i.postimg.cc/qqsDfRd9/Taro-Photo-13.png" },
+        "14": { name: "ไพ่ต้นไม้แห่งความมั่งคั่ง", text: "รากมั่นคง กิ่งก้านย่อมเติบโตไกล", description: "การเงินและความมั่นคงจะค่อย ๆ เพิ่มพูน ขอให้มีความอุดมสมบูรณ์ตลอดไป", img: "https://i.postimg.cc/WbVfGMGr/Taro-Photo-14.png" },
+        "15": { name: "ไพ่คลื่นแห่งโชคดี", text: "คลื่นทุกระลอก พาโชคดีมาสู่ฝั่ง", description: "ข่าวดีและโอกาสดีจะเข้ามาอย่างต่อเนื่อง ขอให้ชีวิตเต็มไปด้วยความราบรื่น", img: "https://i.postimg.cc/wTk4072y/Taro-Photo-15.png" },
+        "16": { name: "ไพ่ดวงตะวันทอง", text: "แสงทองแห่งวันใหม่ นำชัยมาสู่ผู้กล้า", description: "ความสำเร็จกำลังฉายแสงเหนือเส้นทางของคุณ ขอให้ทุกเป้าหมายสัมฤทธิ์ผล", img: "https://i.postimg.cc/VLFZDdg9/Taro-Photo-16.png" },
+        "17": { name: "ไพ่ปีกแห่งอิสรภาพ", text: "เมื่อใจกล้า ปีกแห่งฝันย่อมพาบินไกล", description: "คุณจะได้ทำในสิ่งที่รักและประสบความสำเร็จ ขอให้มีอิสระและความสุขในทุกวัน", img: "https://i.postimg.cc/VLFZDdgB/Taro-Photo-17.png" },
+        "18": { name: "ไพ่มหาสมุทรแห่งพร", text: "พรอันยิ่งใหญ่ ไหลดั่งสายน้ำไม่สิ้นสุด", description: "ความอุดมสมบูรณ์กำลังเข้ามา ขอให้ได้รับทั้งสุขภาพที่แข็งแรงและความมั่งคั่ง", img: "https://i.postimg.cc/6pjjxgDM/Taro-Photo-18.png" },
+        "19": { name: "ไพ่หงส์ขาว", text: "สง่างามด้วยคุณธรรม ย่อมได้รับความเคารพ", description: "ผู้คนจะชื่นชมในความสามารถและความดีของคุณ ขอให้เกียรติยศและความสุขอยู่เคียงข้าง", img: "https://i.postimg.cc/7L5BHXkS/Taro-Photo-19.png" },
+        "20": { name: "ไพ่กุญแจทอง", text: "กุญแจแห่งโชค เปิดทุกประตูแห่งความสำเร็จ", description: "สิ่งที่รอคอยกำลังเปิดทางให้คุณ ขอให้ทุกโอกาสนำพาความสุขและความเจริญ", img: "https://i.postimg.cc/DzSCv5TR/Taro-Photo-20.png" },
+        "21": { name: "ไพ่สายธารแห่งบุญ", text: "บุญที่สร้างไว้ จะหล่อเลี้ยงชีวิตให้ร่มเย็น", description: "สิ่งดีที่คุณทำจะย้อนกลับมาเป็นพรอันยิ่งใหญ่ ขอให้พบแต่คนดีและเรื่องดี", img: "https://i.postimg.cc/6Q8HWzKN/Taro-Photo-21.png" },
+        "22": { name: "ไพ่ฟ้าหลังฝน", text: "ฟ้าแจ่มใส ย่อมนำความสดใสมาสู่หัวใจ", description: "วันข้างหน้าจะเต็มไปด้วยรอยยิ้มและความสมหวัง ขอให้ทุกสิ่งเป็นไปอย่างราบรื่น", img: "https://i.postimg.cc/j24cgFHb/Taro-Photo-22.png" },
+        "23": { name: "ไพ่มงกุฎชัย", text: "ผู้เพียรพยายาม ย่อมคู่ควรกับมงกุฎแห่งชัยชนะ", description: "ความสำเร็จที่คุณปรารถนากำลังใกล้เข้ามา ขอให้ได้รับการยอมรับและความภาคภูมิใจ", img: "https://i.postimg.cc/tJNkSM3y/Taro-Photo-23.png" },
+        "24": { name: "ไพ่เรือแห่งโชค", text: "เรือแห่งฝัน แล่นถึงฝั่งแห่งความสมหวัง", description: "การเดินทางทุกด้านจะราบรื่น ขอให้โชคดีติดตามคุณไปทุกแห่ง", img: "https://i.postimg.cc/4yQPLS6Y/Taro-Photo-24.png" },
+        "25": { name: "ไพ่แสงดาวพราวฟ้า", text: "ดาวนับพันดวง รวมเป็นพรหนึ่งเดียวเพื่อเธอ", description: "คุณกำลังได้รับพลังแห่งความหวัง ขอให้ทุกความฝันกลายเป็นความจริง", img: "https://i.postimg.cc/C5s7PQG8/Taro-Photo-25.png" },
+        "26": { name: "ไพ่ดอกไม้สี่ฤดู", text: "ความสุขผลิบาน ได้ทุกฤดูกาลของชีวิต", description: "ชีวิตจะเต็มไปด้วยความสมดุล ความสุข และความอุดมสมบูรณ์ในทุกช่วงเวลา", img: "https://i.postimg.cc/VkVRVMCb/Taro-Photo-26.png" },
+        "27": { name: "ไพ่มือแห่งเมตตา", text: "ให้ด้วยใจ ย่อมได้รับพรกลับคืนเสมอ", description: "ความเมตตาของคุณจะดึงดูดสิ่งดี ๆ เข้ามา ขอให้มีผู้คนคอยสนับสนุนและช่วยเหลือ", img: "https://i.postimg.cc/pL6Z68FF/Taro-Photo-27.png" },
+        "28": { name: "ไพ่พระพิรุณแห่งพร", text: "สายฝนโปรยพรม หล่อเลี้ยงความฝันให้เติบโต", description: "ความก้าวหน้าและความสำเร็จจะค่อย ๆ งอกงาม ขอให้ชีวิตเปี่ยมด้วยความสดชื่นและโชคดี", img: "https://i.postimg.cc/L8bTbf1j/Taro-Photo-28.png" }
     };
 
     function checkEnter(event) {
@@ -268,17 +194,14 @@
         const modal = document.getElementById("cardModal");
         
         if (cardDatabase[num]) {
-            // เพิ่มการดึงข้อมูลทั้ง 3 ส่วนมาแสดง
             document.getElementById("modalTitle").innerText = cardDatabase[num].name;
             document.getElementById("modalText").innerText = cardDatabase[num].text;
             document.getElementById("modalDescription").innerText = cardDatabase[num].description;
-            
             document.getElementById("modalImage").innerHTML = `<img src="${cardDatabase[num].img}" alt="ไพ่ทำนาย">`;
             
             modal.style.display = "block";
             document.getElementById("luckyNumber").value = "";
         } else {
-            // ปรับข้อความเตือนให้สอดคล้องกับเลข 1-28
             alert("ไม่พบหมายเลขนี้ กรุณาลองใหม่ครับ (ลองพิมพ์เลขระหว่าง 1 ถึง 28)");
         }
     }
